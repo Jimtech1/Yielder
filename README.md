@@ -1,6 +1,56 @@
 # Yielder Backend
 
-## Reviewer Quick Start
+Backend API for Yielder, a multi-chain portfolio and DeFi platform focused on Stellar plus cross-chain routing and analytics.
+
+## What This Service Covers
+
+- Authentication (email, Google, wallet challenge/login/link)
+- Wallet management and activity ingestion
+- Portfolio valuation, analytics, and performance endpoints
+- DeFi flows (yield discovery, optimizer, borrow, bridge/swap tx building)
+- RPC health and chain call/broadcast endpoints
+- Anchor integration endpoints
+- Notifications and admin audit/feature controls
+- Billing checkout/portal endpoints
+
+## Tech Stack
+
+- NestJS 10 + Fastify
+- MongoDB + Mongoose
+- JWT auth
+- Swagger/OpenAPI at runtime
+- Pino logger
+
+## Repository Layout
+
+```text
+src/
+  modules/
+    auth/
+    wallet/
+    portfolio/
+    defi/
+    rpc/
+    market/
+    oracle/
+    realtime/
+    notifications/
+    billing/
+    ...
+  main.ts
+  modules/app.module.ts
+docs/
+  API_ROUTES.md
+  ARCHITECTURE_OVERVIEW.md
+```
+
+## Prerequisites
+
+- Node.js 20+ recommended
+- npm
+- MongoDB running locally or remotely
+
+## Quick Start
 
 1. Install dependencies.
 
@@ -8,66 +58,109 @@
 npm install
 ```
 
-2. Create local env file.
+2. Copy env template.
 
 ```bash
 cp .env.example .env
 ```
 
-3. Start API locally.
+3. Set minimum required env values in `.env`:
+
+- `MONGO_URI`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `PORT` (default used in this project is `8085`)
+- `STELLAR_NETWORK` and Horizon URL values
+
+4. Start backend.
 
 ```bash
 npm run start:dev
 ```
 
-Default API base URL is `http://127.0.0.1:8085`.
+5. Open API docs.
 
-4. Run smoke checks.
+- `http://127.0.0.1:8085/api/docs`
 
-```bash
-npm run smoke:wallet:evm
-npm run smoke:bridge:evm
-```
+## Runtime Endpoints
 
-Optional env vars for bridge smoke:
-- `BRIDGE_SRC_CHAIN` (default `ethereum`)
-- `BRIDGE_DST_CHAIN` (default `arbitrum`)
-- `BRIDGE_SRC_SYMBOL` (default `USDC`)
-- `BRIDGE_DST_SYMBOL` (default `USDC`)
-- `BRIDGE_SRC_AMOUNT` (default `1`)
+- API base (local): `http://127.0.0.1:8085`
+- Swagger: `GET /api/docs`
+- Health examples:
+  - `GET /realtime/health`
+  - `GET /api/stellar/network-stats`
 
-Notes
-- `/defi/bridge/*` supports EVM route quote/build (and Stellar external routes).
-- `/defi/swap/*` is Stellar path-payment swap, not EVM swap.
+## Scripts
 
-## Documentation
+| Script | Purpose |
+|---|---|
+| `npm run start` | Start app |
+| `npm run start:dev` | Watch mode for development |
+| `npm run build` | Clean + compile TypeScript |
+| `npm run start:prod` | Run compiled app from `dist` |
+| `npm run smoke:wallet:evm` | Wallet auth smoke check |
+| `npm run smoke:bridge:evm` | Bridge quote/build smoke check |
+| `npm run prisma:generate` | Prisma client generation |
+| `npm run prisma:migrate` | Prisma migration (if used in your setup) |
 
-- API route catalog: `docs/API_ROUTES.md`
-- Architecture overview: `docs/ARCHITECTURE_OVERVIEW.md`
-- Interactive API docs at runtime: `GET /api/docs`
+## Environment Notes
 
-RPC backup/failover configuration
+Full variable template is in `.env.example`.
 
-To avoid `RPC: Degraded` when a provider is rate-limited, configure multiple endpoints per chain.
+Important groups:
 
-Axelar-supported env keys (all can be used together):
-- `AXELAR_RPC_URL` (single primary endpoint)
-- `AXELAR_RPC_URLS` (comma-separated list)
-- `AXELAR_RPC_BACKUP_URLS` (comma-separated backup list)
-- `RPC_URLS_AXELAR` (generic chain key format)
-- `RPC_BACKUP_URLS_AXELAR` (generic backup list)
+- Auth/security: `JWT_SECRET`, `JWT_REFRESH_SECRET`, `GOOGLE_CLIENT_ID`, `TURNSTILE_SECRET_KEY`
+- Chain/rpc: `STELLAR_NETWORK`, `STELLAR_HORIZON_URL*`, `AXELAR_RPC_URL*`, `RPC_*`
+- Market/oracle tuning: `PYTH_*`, `MARKET_*`
+- DeFi/bridge: `STELLAR_CIRCLE_CCTP_V2_*`, `BRIDGE_*`, `OPTIMIZER_*`
+- Billing URLs: `BILLING_*`
+
+## Reviewer Flow (Suggested)
+
+1. Start backend and open Swagger (`/api/docs`).
+2. Get token via `POST /auth/login` or wallet auth endpoints.
+3. Verify auth via `GET /auth/me`.
+4. Check core data routes:
+   - `GET /wallet`
+   - `GET /portfolio/summary`
+   - `GET /portfolio/analytics`
+5. Check infra routes:
+   - `GET /rpc/status/:chain`
+   - `GET /realtime/health`
+6. Check DeFi routes:
+   - `GET /defi/yields`
+   - `GET /defi/bridge/quote`
+
+## Detailed Documentation
+
+- Route catalog: `docs/API_ROUTES.md`
+- Architecture and module map: `docs/ARCHITECTURE_OVERVIEW.md`
+
+## RPC Failover Configuration
+
+To reduce degraded RPC incidents, configure multiple endpoints per chain.
+
+Axelar-related env keys (can be combined):
+
+- `AXELAR_RPC_URL`
+- `AXELAR_RPC_URLS`
+- `AXELAR_RPC_BACKUP_URLS`
+- `RPC_URLS_AXELAR`
+- `RPC_BACKUP_URLS_AXELAR`
 
 Generic chain format:
+
 - `RPC_URLS_<CHAIN>`
 - `RPC_BACKUP_URLS_<CHAIN>`
-- `RPC_URL_<CHAIN>` (legacy single endpoint)
+- `RPC_URL_<CHAIN>`
 
 Health-check tuning:
-- `RPC_STATUS_MAX_ENDPOINTS` controls how many configured endpoints are checked for `/rpc/status/:chain`.
 
-Custom Stellar CCTP v2 tx-builder scaffold
+- `RPC_STATUS_MAX_ENDPOINTS` controls endpoint fan-out in `/rpc/status/:chain`.
 
-For no-tab in-app execution without a partner endpoint, you can wire the internal upstream to the custom scaffold endpoint:
+## CCTP Custom Tx Builder (Internal Flow)
+
+For internal no-tab execution wiring, example settings:
 
 ```bash
 STELLAR_CIRCLE_CCTP_V2_TX_API_URL=http://127.0.0.1:8085/defi/bridge/internal/circle-cctp-v2/build-tx
@@ -78,17 +171,38 @@ STELLAR_CIRCLE_CCTP_V2_UPSTREAM_API_KEY=local-cctp-dev-key
 STELLAR_CIRCLE_CCTP_V2_CUSTOM_TX_API_KEY=local-cctp-dev-key
 STELLAR_CIRCLE_CCTP_V2_CUSTOM_ALLBRIDGE_API_URL=https://core.api.allbridgecoreapi.net
 STELLAR_CIRCLE_CCTP_V2_CUSTOM_ALLBRIDGE_MESSENGER=ALLBRIDGE
-STELLAR_CIRCLE_CCTP_V2_CUSTOM_ALLBRIDGE_CHAIN_SYMBOL_OVERRIDES='{"blast":"BLA"}'
 ```
 
 Modes:
-- `simulate-auto`: Stellar source returns `bridgeStellarTransaction` XDR; EVM source returns a no-op EVM tx.
-- `simulate-stellar-xdr`: always builds Stellar payment XDR (requires `srcChainKey=stellar`).
-- `simulate-evm-tx`: always builds no-op EVM transaction payload.
-- `custom-template`: real provider integration via Allbridge Core REST API (`/chains`, `/check/bridge/allowance`, `/raw/bridge/approve`, `/raw/bridge`).
+
+- `simulate-auto`
+- `simulate-stellar-xdr`
+- `simulate-evm-tx`
+- `custom-template`
 
 Important:
-- simulation modes are for end-to-end in-app wiring tests only (not real cross-chain bridging).
-- `custom-template` is real provider flow, but route availability and success depend on Allbridge-supported chains/tokens and destination wallet prerequisites (for Stellar, trustline requirements may still apply).
-- In this integration, Allbridge `custom-template` mode is mainnet-only for Stellar. If `STELLAR_NETWORK=testnet`, in-app Circle CCTP v2 custom-template routes are rejected by design.
-- use `STELLAR_CIRCLE_CCTP_V2_CUSTOM_ALLBRIDGE_CHAIN_SYMBOL_OVERRIDES` when your local chain keys differ from Allbridge chain symbols.
+
+- Simulation modes are for integration testing only, not real bridging.
+- `custom-template` availability depends on supported chains/tokens and wallet prerequisites.
+- In this integration, Allbridge `custom-template` for Stellar is mainnet-only.
+
+## Security Notes
+
+- Do not commit `.env` or secrets.
+- Keep `.env.example` non-sensitive.
+- Internal bridge endpoints under `/defi/bridge/internal/*` should be network-restricted (or guarded) for production exposure.
+
+## Troubleshooting
+
+- `401 Unauthorized`: verify bearer token and JWT env keys.
+- RPC degraded in `/rpc/status/*`: add backup RPC URLs and tune retry/timeout vars.
+- Empty market/portfolio data: verify `STELLAR_NETWORK` and Horizon/RPC configuration.
+- Startup DB error: verify `MONGO_URI` and MongoDB connectivity.
+
+## Handoff Checklist
+
+- [x] `.env.example` included
+- [x] route map in `docs/API_ROUTES.md`
+- [x] architecture map in `docs/ARCHITECTURE_OVERVIEW.md`
+- [x] smoke scripts documented
+- [x] reviewer runbook included in README
