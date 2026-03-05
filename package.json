@@ -1,0 +1,47 @@
+{
+  "name": "yielder-backend",
+  "version": "1.0.0",
+  "description": "Yielder Multi-Chain Portfolio Platform Backend",
+  "main": "dist/main.js",
+  "scripts": {
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "build": "npm run clean && nest build",
+    "start": "nest start",
+    "start:dev": "npm run clean && nest start --watch",
+    "start:prod": "node dist/main",
+    "smoke:wallet:evm": "node test-evm-auth.js",
+    "smoke:bridge:evm": "node test-evm-bridge.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@axelar-network/axelarjs-sdk": "^0.13.8",
+    "@fastify/static": "^7.0.4",
+    "@nestjs/bullmq": "^11.0.4",
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^10.3.0",
+    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/passport": "^10.0.3",
+    "@nestjs/platform-fastify": "^10.3.0",
+    "@nestjs/swagger": "^7.2.0",
+    "argon2": "^0.31.2",
+    "axios": "^1.13.4",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ethers": "^6.10.0",
+    "mongoose": "^8.10.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "stellar-sdk": "^11.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.3.0",
+    "@types/node": "^20.11.0",
+    "@types/passport-jwt": "^4.0.0",
+    "typescript": "^5.3.3"
+  }
+}
