@@ -40,6 +40,12 @@ Notes
 - `/defi/bridge/*` supports EVM route quote/build (and Stellar external routes).
 - `/defi/swap/*` is Stellar path-payment swap, not EVM swap.
 
+## Documentation
+
+- API route catalog: `docs/API_ROUTES.md`
+- Architecture overview: `docs/ARCHITECTURE_OVERVIEW.md`
+- Interactive API docs at runtime: `GET /api/docs`
+
 RPC backup/failover configuration
 
 To avoid `RPC: Degraded` when a provider is rate-limited, configure multiple endpoints per chain.
