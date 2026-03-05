@@ -1,25 +1,31 @@
-Yielder Backend
+# Yielder Backend
 
-Quick local smoke checks
+## Reviewer Quick Start
 
-1. Start backend
+1. Install dependencies.
 
 ```bash
-npm run start
+npm install
 ```
 
-By default, helper scripts call `http://127.0.0.1:8085`.
-Override with `API_BASE_URL` if needed.
+2. Create local env file.
 
-2. EVM wallet auth smoke test
+```bash
+cp .env.example .env
+```
+
+3. Start API locally.
+
+```bash
+npm run start:dev
+```
+
+Default API base URL is `http://127.0.0.1:8085`.
+
+4. Run smoke checks.
 
 ```bash
 npm run smoke:wallet:evm
-```
-
-3. EVM bridge quote/build smoke test (no on-chain transaction is sent)
-
-```bash
 npm run smoke:bridge:evm
 ```
 
